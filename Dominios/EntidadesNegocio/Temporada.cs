@@ -6,6 +6,7 @@ namespace Dominio
 {
     public class Temporada
     {
+        public string CodISAN { get; set; }
         public string Titulo { get; set; }
         public int NroTemporada { get; set; }
         public DateTime FechaEstreno { get; set; }

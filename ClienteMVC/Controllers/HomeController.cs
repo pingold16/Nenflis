@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ServicioWCF;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -16,8 +17,15 @@ namespace ClienteMVC.Controllers
             }
             else
             {
-                return Redirect("./login");
+                return Redirect("./Login");
             }
+        }
+
+        public ActionResult Generar()
+        {
+            Service proxy = new Service();
+            proxy.generarTxt();
+            return Redirect("./Home");
         }
 
         public ActionResult About()

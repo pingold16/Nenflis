@@ -9,6 +9,7 @@ using System.Text;
 using Repositorio;
 using Dominio;
 using Dominios.EntidadesNegocio;
+using System.IO;
 
 namespace ServicioWCF
 {
@@ -34,15 +35,63 @@ namespace ServicioWCF
             return composite;
         }
 
+        public bool addTemporada(DTOTemporada t)
+        {
+            return rTemp.Add(t.ConvertirDTO());
+        }
+
+        RepositorioTemporada rTemp = new RepositorioTemporada();
+
+        public IEnumerable<DTOTemporada> traerTemporadas()
+        {
+            List<DTOTemporada> t = new List<DTOTemporada>();
+            foreach (var i in rTemp.FindAll()) { t.Add(convertTemp(i)); }
+            return t;
+        }
+
+        private DTOTemporada convertTemp(Temporada t)
+        {
+            DTOTemporada dt = new DTOTemporada()
+            {
+                CodISAN = t.CodISAN,
+                NroTemporada = t.NroTemporada,
+                Titulo = t.Titulo,
+                FechaEstreno = t.FechaEstreno,
+                Imagen = t.Imagen
+            };
+            List<DTOEpisodio> e = new List<DTOEpisodio>();
+            foreach (var i in t.Episodios)
+            {
+                e.Add(new DTOEpisodio()
+                { 
+                    Ordial = i.Ordial,
+                    Titulo = i.Titulo,
+                    Descripcion = i.Descripcion,
+                    Duracion = i.Duracion
+                });
+            }
+            dt.Episodios = e;
+            return dt;
+        }
+
         RepositorioUser rus = new RepositorioUser();
-        [OperationContract]
+
         public bool validarUser(DTOUser e)
         {
             return rus.validarUser(new User() { user = e.user, pass = e.pass });
         }
 
+        public bool addUser(DTOUser u)
+        {
+            return rus.Add(new User()
+            {
+                user = u.user,
+                pass = u.pass
+            });
+        }
+
         RepositorioMaterial rMat = new RepositorioMaterial();
-        [OperationContract]
+
         public IEnumerable<DTOMaterial> cargarMaterial()
         {
             List<DTOMaterial> m = new List<DTOMaterial>();
@@ -77,22 +126,6 @@ namespace ServicioWCF
         public object traerMaterial(string id)
         {
             Material m = rMat.FindById(id);
-            return new DTOMaterial()
-            {
-                CodISAN = m.CodISAN
-                //continuara...
-            };
-        }
-
-        public bool deleteMaterial(string id)
-        {
-            return rMat.Remove(id);
-        }
-
-        [OperationContract]
-        public DTOMaterial cargarMaterial(string id)
-        {
-            Material m = rMat.FindById(id);
             DTOPersona dir = new DTOPersona()
             {
                 Id = m.Director.Id,
@@ -101,6 +134,35 @@ namespace ServicioWCF
                 PaisNacimiento = convPais(m.Director.PaisNacimiento),
                 NombreArt = m.Director.NombreArt,
                 MinutoPantalla = m.Director.MinutoPantalla
+            };
+            DTOGenero g = new DTOGenero() { Nombre = m.Genero.Nombre, Descripcion = m.Genero.Descripcion };
+            return new DTOMaterial()
+            {
+                CodISAN = m.CodISAN,
+                Titulo = m.Titulo,
+                FechaEstreno = m.FechaEstreno,
+                Genero = g,
+                Pais = convPais(m.Pais),
+                Descripcion = m.Descripcion,
+                Imagen = m.Imagen,
+                Tipo = (m is Pelicula)
+            };
+        }
+
+        public bool deleteMaterial(string id)
+        {
+            return rMat.Remove(id);
+        }
+
+        public DTOMaterial cargarMaterialxId(string id)
+        {
+            Material m = rMat.FindById(id);
+            DTOPersona dir = new DTOPersona()
+            {
+                Id = m.Director.Id,
+                Nombre = m.Director.Nombre,
+                Apellido = m.Director.Apellido,
+                PaisNacimiento = convPais(m.Director.PaisNacimiento)
             };
             DTOGenero g = new DTOGenero() { Nombre = m.Genero.Nombre, Descripcion = m.Genero.Descripcion };
             return new DTOMaterial()
@@ -126,19 +188,19 @@ namespace ServicioWCF
             };
         }
 
-        [OperationContract]
+
         public bool editMaterial(DTOMaterial m)
         {
             return rMat.Update(m.ConvertirDTO());
         }
 
-        [OperationContract]
+
         public bool removeMaterial(string id)
         {
             return rMat.Remove(id);
         }
 
-        [OperationContract]
+
         public IEnumerable<DTOMaterial> cargarMaterialxTipo(string type)
         {
             List<DTOMaterial> m = new List<DTOMaterial>();
@@ -170,10 +232,9 @@ namespace ServicioWCF
             return m;
         }
 
-        [OperationContract]
+
         public bool addMaterial(DTOMaterial m)
         {
-            bool ret = false;
             List<Persona> elen = new List<Persona>();
             if (m.Elenco != null)
             {
@@ -190,13 +251,17 @@ namespace ServicioWCF
                     });
                 }
             }
+            bool ret = false;
             if (m.Tipo) //TRUE = PELICULA
             {
-                 ret = rMat.Add(new Pelicula() {
+                ret = rMat.Add(new Pelicula()
+                {
                     CodISAN = m.CodISAN,
                     Titulo = m.Titulo,
-                    Director = m.Director.ConvertirDTO(),
+                    //Director = m.Director.ConvertirDTO(),
                     FechaEstreno = m.FechaEstreno,
+                    //Pais = m.Pais.ConvertirDTO(),
+                    //Genero = m.Genero.ConvertirDTO(),
                     Elenco = elen
                 });
             }
@@ -214,7 +279,6 @@ namespace ServicioWCF
             return ret;
         }
 
-        [OperationContract]
         public IEnumerable<DTOPais> cargarPaises()
         {
             RepositorioPais rPais = new RepositorioPais();
@@ -230,7 +294,6 @@ namespace ServicioWCF
             return paises;
         }
 
-        [OperationContract]
         public IEnumerable<DTOGenero> cargarGenero()
         {
             RepositorioGenero rGenero = new RepositorioGenero();
@@ -245,5 +308,40 @@ namespace ServicioWCF
             }
             return generos;
         }
+
+        RepositorioPersona rPer = new RepositorioPersona();
+
+        public void generarTxt()
+        {
+            FileStream fs = File.Open(@"C:\Migracion.txt", FileMode.OpenOrCreate);
+            StreamWriter sw = new StreamWriter(fs);
+            string sep = "#";
+            sw.WriteLine("Materiales");
+            foreach (Material i in rMat.FindAll())
+            {
+                sw.WriteLine(i.CodISAN + i.Titulo + i.Pais.Nombre + i.Genero.Nombre
+                      + i.FechaEstreno + i.Descripcion + i.Imagen + sep);
+            }
+
+            sw.WriteLine("Temporadas");
+            foreach (Temporada i in rTemp.FindAll())
+            {
+                sw.WriteLine(i.CodISAN + i.NroTemporada + i.Titulo
+                    + i.FechaEstreno + sep);
+                foreach (var e in i.Episodios)
+                {
+                    sw.WriteLine(e.Ordial + e.Titulo + e.Descripcion + e.Duracion + sep);
+                }
+            }
+
+            sw.WriteLine("Personas");
+            foreach (var i in rPer.FindAll())
+            {
+                sw.WriteLine(i.Id + i.Nombre + i.Apellido + i.NombreArt
+                      + i.PaisNacimiento.Nombre + sep);
+            }
+            sw.Close();
+        }
     }
 }
+

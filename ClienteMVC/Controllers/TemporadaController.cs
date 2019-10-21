@@ -1,73 +1,46 @@
-﻿using ServicioWCF;
-using ServicioWCF.DTO;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using ServicioWCF;
+using ServicioWCF.DTO;
 
 namespace ClienteMVC.Controllers
 {
-    public class LoginController : Controller
+    public class TemporadaController : Controller
     {
         Service proxy = new Service();
-
-        // GET: Login
+        // GET: Temporada
         public ActionResult Index()
         {
-            return View();
+            return View(proxy.traerTemporadas());
         }
 
-        [HttpPost]
-        public ActionResult Index(DTOUser u)
-        {
-            if (proxy.validarUser(u))
-            {
-                Session["user"] = u.user;
-                return Redirect("/Home");
-            }
-            else
-            {
-                ViewBag.Msj = "Algo salio mal!";
-                return View();
-            }
-        }
-
-        public ActionResult CerrarSesion()
-        {
-            Session["user"] = null;
-            return Redirect("/Home");
-        }
-
-        // GET: Login/Details/5
+        // GET: Temporada/Details/5
         public ActionResult Details(int id)
         {
             return View();
         }
 
-        // GET: Login/Create
+        // GET: Temporada/Create
         public ActionResult Create()
         {
             return View();
         }
 
-        // POST: Login/Create
+        // POST: Temporada/Create
         [HttpPost]
-        public ActionResult Create(DTOUser u)
+        public ActionResult Create(DTOTemporada t)
         {
             try
             {
                 // TODO: Add insert logic here
-                if (u.pass == u.pass2 && proxy.addUser(u))
-                {
-                    ViewBag.Msj = "Exito";
+                if (proxy.addTemporada(t))
                     return RedirectToAction("Index");
-                }
-                else
-                {
-                    ViewBag.Msj = "Algo salio mal.";
-                    return View(u);
-                }
+
+                ViewBag.Msj = "Algo salio mal.";
+                return View(t);
             }
             catch
             {
@@ -75,13 +48,13 @@ namespace ClienteMVC.Controllers
             }
         }
 
-        // GET: Login/Edit/5
+        // GET: Temporada/Edit/5
         public ActionResult Edit(int id)
         {
             return View();
         }
 
-        // POST: Login/Edit/5
+        // POST: Temporada/Edit/5
         [HttpPost]
         public ActionResult Edit(int id, FormCollection collection)
         {
@@ -97,13 +70,13 @@ namespace ClienteMVC.Controllers
             }
         }
 
-        // GET: Login/Delete/5
+        // GET: Temporada/Delete/5
         public ActionResult Delete(int id)
         {
             return View();
         }
 
-        // POST: Login/Delete/5
+        // POST: Temporada/Delete/5
         [HttpPost]
         public ActionResult Delete(int id, FormCollection collection)
         {

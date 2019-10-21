@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ServicioWCF.DTO;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -20,6 +21,43 @@ namespace ServicioWCF
         CompositeType GetDataUsingDataContract(CompositeType composite);
 
         // TODO: Add your service operations here
+        [OperationContract]
+        bool addTemporada(DTOTemporada t);
+        [OperationContract]
+        IEnumerable<DTOTemporada> traerTemporadas();
+        [OperationContract]
+        bool addMaterial(DTOMaterial m);
+        [OperationContract]
+        IEnumerable<DTOPais> cargarPaises();
+        [OperationContract]
+        bool validarUser(DTOUser e);
+
+        [OperationContract]
+        bool addUser(DTOUser u);
+
+        [OperationContract]
+        IEnumerable<DTOMaterial> cargarMaterial();
+
+        [OperationContract]
+        object traerMaterial(string id);
+
+        [OperationContract]
+        bool deleteMaterial(string id);
+
+        [OperationContract]
+        DTOMaterial cargarMaterialxId(string id);
+
+        [OperationContract]
+        bool editMaterial(DTOMaterial m);
+
+        [OperationContract]
+        bool removeMaterial(string id);
+
+        [OperationContract]
+        IEnumerable<DTOMaterial> cargarMaterialxTipo(string type);
+
+        [OperationContract]
+        IEnumerable<DTOGenero> cargarGenero();
     }
 
 

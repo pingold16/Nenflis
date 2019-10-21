@@ -16,18 +16,15 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                @Html.ActionLink("Netflix", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+                @Html.ActionLink("Nenflis", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
                     @if (Session["user"] != null)
                     {
                         <li>@Html.ActionLink("Home", "Index", "Home")</li>
+                        <li class="text-danger">@Session["user"]</li>
                         <li>@Html.ActionLink("CerrarSesion", "CerrarSesion", "Login")</li>
-                    }
-                    else
-                    {
-                        <li>@Html.ActionLink("Registrar", "Registrar", "Login")</li>
                     }
                 </ul>
             </div>
@@ -37,7 +34,7 @@
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+            <p>&copy; @DateTime.Now.Year - Todos los derechos reservados, y los izquierdos tambien.</p>
         </footer>
     </div>
 

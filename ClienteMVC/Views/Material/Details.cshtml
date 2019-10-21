@@ -55,7 +55,14 @@
         </dt>
 
         <dd>
-            @Html.DisplayFor(model => model.Tipo)
+            @if (Model.Tipo)
+            {
+                <p>Pelicula</p>
+            }
+            else
+            {
+                <p>Serie</p>
+            }
         </dd>
 
     </dl>
