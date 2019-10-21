@@ -12,5 +12,6 @@ namespace ServicioWCF.DTO
         [DataMember]
         public string user { get; set; }
         public string pass { get; set; }
+        public string pass2 { get; set; }
     }
 }

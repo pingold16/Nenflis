@@ -35,9 +35,9 @@ namespace ClienteMVC.Controllers
         }
 
         // GET: Material/Details/5
-        public ActionResult Details(int id)
+        public ActionResult Details(string id)
         {
-            return View();
+            return View(proxy.cargarMaterialxId(id));
         }
 
         // GET: Material/Create
@@ -78,7 +78,7 @@ namespace ClienteMVC.Controllers
         // GET: Material/Edit/5
         public ActionResult Edit(string id)
         {
-            return View(proxy.cargarMaterial(id));
+            return View(proxy.cargarMaterialxId(id));
         }
 
         // POST: Material/Edit/5

@@ -63,7 +63,7 @@
             @{
                 foreach (var i in ViewBag.Paises)
                 {
-                    <option value=@i>@i.Nombre</option>
+                    <option value=@i.Id>@i.Nombre</option>
                 }
             }
         </select>
@@ -75,7 +75,7 @@
             @{
                 foreach (var i in ViewBag.Generos)
                 {
-                    <option value=@i>@i.Nombre - @i.Descripcion</option>
+                    <option value=@i.Nombre>@i.Nombre - @i.Descripcion</option>
                 }
             }
         </select>

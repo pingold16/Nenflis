@@ -21,7 +21,24 @@ namespace Repositorio
             SqlConnection cn = UtilidadesBD.CrearConexion();
             //Preparar el comando
 
-            SqlCommand cmd = new SqlCommand("INSERT INTO Material VALUES (@cod, @titulo, @fechEst, @dir, @gen, @pais, @desc, @img)", cn);
+            SqlCommand cmd;
+
+            SqlCommand cmdH = new SqlCommand();
+            SqlTransaction transaction = null;
+            Pelicula p = item as Pelicula;
+            if (p != null)
+            {
+                cmd = new SqlCommand("INSERT INTO Material VALUES(@cod, @titulo, @fechEst, @dir, @gen, @pais, @desc, @img);" +
+                                      "INSERT INTO Pelicula Values (@cod, @cantEntradas, @monto, @duracion)", cn);
+                cmd.Parameters.Add(new SqlParameter("@cantEntradas", p.CantEntradas));
+                cmd.Parameters.Add(new SqlParameter("@monto", p.MontoRecaudado));
+                cmd.Parameters.Add(new SqlParameter("@duracion", p.Duracion));
+            }
+            else
+            {
+                cmd = new SqlCommand("INSERT INTO Material VALUES(@cod, @titulo, @fechEst, @dir, @gen, @pais, @desc, @img); " +
+                                        "INSERT INTO Serie Values (@cod)", cn);
+            }
             cmd.Parameters.Add(new SqlParameter("@cod", item.CodISAN));
             cmd.Parameters.Add(new SqlParameter("@titulo", item.Titulo));
             cmd.Parameters.Add(new SqlParameter("@fechEst", item.FechaEstreno));
@@ -31,62 +48,45 @@ namespace Repositorio
             cmd.Parameters.Add(new SqlParameter("@desc", item.Descripcion));
             cmd.Parameters.Add(new SqlParameter("@img", item.Imagen));
 
-            SqlCommand cmdH = new SqlCommand();
-            SqlTransaction transaction = null;
-            Pelicula p = item as Pelicula;
-            if (p != null)
-            {
-                cmdH = new SqlCommand("INSERT INTO Pelicula Values (@cod, @cantEntradas, @monto, @duracion)", cn);
-                cmdH.Parameters.Add(new SqlParameter("@cod", item.CodISAN));
-                cmdH.Parameters.Add(new SqlParameter("@cantEntradas", p.CantEntradas));
-                cmdH.Parameters.Add(new SqlParameter("@monto", p.MontoRecaudado));
-                cmdH.Parameters.Add(new SqlParameter("@duracion", p.Duracion));
-            }
-            else
-            {
-                cmdH = new SqlCommand("INSERT INTO Serie Values (@cod)", cn);
-                cmdH.Parameters.AddWithValue("@cod", item.CodISAN);
-            }
-
             //El comando está completo, ejecutarlo
             try
             {
                 using (cn) // el bloque using asegura que se realice el dispose de la conexión
                 {
                     UtilidadesBD.AbrirConexion(cn);
-                    transaction = cn.BeginTransaction();
-                    cmd.Transaction = transaction;
+                    //transaction = cn.BeginTransaction();
+                    //cmd.Transaction = transaction;
 
                     cmd.ExecuteNonQuery();
-                    cmdH.ExecuteNonQuery();
+                    //cmdH.ExecuteNonQuery();
 
-                    //Me creo un id unico para todo el elenco. Ademas, me aseguro que no se repitan los actores.
-                    SqlCommand sel = new SqlCommand("SELECT MAX(ElencoId) FROM Elenco ", cn);
-                    int ElencoId = (int)sel.ExecuteScalar() + 1; //Le sumo uno al id mas grande
+                    ////Me creo un id unico para todo el elenco. Ademas, me aseguro que no se repitan los actores.
+                    //SqlCommand sel = new SqlCommand("SELECT MAX(ElencoId) FROM Elenco ", cn);
+                    //int ElencoId = (int)sel.ExecuteScalar() + 1; //Le sumo uno al id mas grande
 
-                    //Alta elenco
-                    foreach (var e in item.Elenco)
-                    {
-                        if (e.Id != item.Director.Id) //El director no puede actuar
-                        {
-                            //Si no existe el Actor, lo agrego
-                            SqlCommand cmdE = new SqlCommand(@"INSERT INTO Persona Values (@id, @nombre, @apellido, @pais, @nArt) 
-                                                            Where @cod NOT IN (SELECT PersonaId From Persona Where PersonaId = @cod)", cn);
-                            cmdE.Parameters.AddWithValue("@id", e.Id);
-                            cmdE.Parameters.AddWithValue("@nombre", e.Nombre);
-                            cmdE.Parameters.AddWithValue("@apellido", e.Apellido);
-                            cmdE.Parameters.AddWithValue("@pais", e.PaisNacimiento.Id);
-                            cmdE.Parameters.AddWithValue("@nArt", e.NombreArt);
-                            cmdE.ExecuteNonQuery();
-                            //Inserto en Elenco
-                            cmdE = new SqlCommand(@"INSERT INTO Elenco Values (@id, @codIsan, @persId)", cn);
-                            cmdE.Parameters.AddWithValue("@id", ElencoId);
-                            cmdE.Parameters.AddWithValue("@codIsan", item.CodISAN);
-                            cmdE.Parameters.AddWithValue("@persId", e.Id);
-                            cmdE.ExecuteNonQuery();
-                        }
-                    }
-                    transaction.Commit();
+                    ////Alta elenco
+                    //foreach (var e in item.Elenco)
+                    //{
+                    //    if (e.Id != item.Director.Id) //El director no puede actuar
+                    //    {
+                    //        //Si no existe el Actor, lo agrego
+                    //        SqlCommand cmdE = new SqlCommand(@"INSERT INTO Persona Values (@id, @nombre, @apellido, @pais, @nArt) 
+                    //                                        Where @cod NOT IN (SELECT PersonaId From Persona Where PersonaId = @cod)", cn);
+                    //        cmdE.Parameters.AddWithValue("@id", e.Id);
+                    //        cmdE.Parameters.AddWithValue("@nombre", e.Nombre);
+                    //        cmdE.Parameters.AddWithValue("@apellido", e.Apellido);
+                    //        cmdE.Parameters.AddWithValue("@pais", e.PaisNacimiento.Id);
+                    //        cmdE.Parameters.AddWithValue("@nArt", e.NombreArt);
+                    //        cmdE.ExecuteNonQuery();
+                    //        //Inserto en Elenco
+                    //        cmdE = new SqlCommand(@"INSERT INTO Elenco Values (@id, @codIsan, @persId)", cn);
+                    //        cmdE.Parameters.AddWithValue("@id", ElencoId);
+                    //        cmdE.Parameters.AddWithValue("@codIsan", item.CodISAN);
+                    //        cmdE.Parameters.AddWithValue("@persId", e.Id);
+                    //        cmdE.ExecuteNonQuery();
+                    //    }
+                    //}
+                    //transaction.Commit();
                     return true;
                 }
             }
@@ -183,8 +183,19 @@ namespace Repositorio
         {
             SqlConnection cn = UtilidadesBD.CrearConexion();
             //Preparar el comando
-            SqlCommand cmd = new SqlCommand(@"SELECT m.*, e.* FROM Material m, Elenco e, Persona p
-                                            WHERE e.CodISAN = m.CodISAN and p.Id = e.ElencoId and Tipo=@type;", cn);
+            SqlCommand cmd;
+            if (type == "P")
+            {
+                cmd = new SqlCommand(@"Select m.*, peli.*, p.Name as PaisNombre, g.Descripcion as DescGenero
+                                        from Material m, Countries p, Genero g, Pelicula peli
+                                        where m.PaisId = p.Id and m.Genero = g.Nombre and m.CodISAN = peli.CodISAN;", cn);
+            }
+            else
+            {
+                cmd = new SqlCommand(@"Select m.*, peli.*, p.Name as PaisNombre, g.Descripcion as DescGenero
+                                            from Material m, Countries p, Genero g, Serie peli
+                                            where m.PaisId = p.Id and m.Genero = g.Nombre and m.CodISAN = peli.CodISAN;", cn);
+            }
             cmd.Parameters.Add(new SqlParameter("@type", type));
 
             List<Material> retorno = new List<Material>();
@@ -197,56 +208,64 @@ namespace Repositorio
                     SqlDataReader dr = cmd.ExecuteReader();
                     if (dr.HasRows)
                     {
-                        if (dr.Read())
+                        while (dr.Read())
                         {
-                            List<Persona> elenco = new List<Persona>();
-                            while (dr.Read())
-                            {
-                                elenco.Add(new Persona
-                                {
-                                    Id = (int)dr["Id"],
-                                    Nombre = dr["Nombre"].ToString(),
-                                    Apellido = dr["Apellido"].ToString(),
-                                    PaisNacimiento = rPais.FindById((int)dr["PaisId"]),
-                                    NombreArt = dr["NombreArt"].ToString(),
-                                    MinutoPantalla = (int)dr["MinutoPantalla"]
-                                });
-                            }
+                            //List<Persona> elenco = new List<Persona>();
+                            //while (dr.Read())
+                            //{
+                            //    elenco.Add(new Persona
+                            //    {
+                            //        Id = (int)dr["Id"],
+                            //        Nombre = dr["Nombre"].ToString(),
+                            //        Apellido = dr["Apellido"].ToString(),
+                            //        PaisNacimiento = rPais.FindById((int)dr["PaisId"]),
+                            //        NombreArt = dr["NombreArt"].ToString(),
+                            //        MinutoPantalla = (int)dr["MinutoPantalla"]
+                            //    });
+                            //}
                             if (type == "P")
                             {
-                                while (dr.Read())
+                                retorno.Add(new Pelicula()
                                 {
-                                    retorno.Add(new Pelicula()
+                                    CodISAN = dr["CodISAN"].ToString(),
+                                    Titulo = dr["Titulo"].ToString(),
+                                    FechaEstreno = dr["FechaEstreno"].ToString(),
+                                    Director = rPersona.FindById((int)dr["DirectorId"]),
+                                    Genero = new Genero()
                                     {
-                                        CodISAN = dr["CodISAN"].ToString(),
-                                        Titulo = dr["Titulo"].ToString(),
-                                        FechaEstreno = dr["FechaEstreno"].ToString(),
-                                        Director = rPersona.FindById(dr["Director"]),
-                                        Genero = rGenero.FindById(dr["Genero"]),
-                                        Pais = rPais.FindById(dr["PaisId"]),
-                                        Descripcion = dr["Descripcion"].ToString(),
-                                        Imagen = dr["Imagen"].ToString(),
-                                        Elenco = elenco
-                                    });
-                                }
+                                        Nombre = dr["Genero"].ToString(),
+                                        Descripcion = dr["DescGenero"].ToString()
+                                    },
+                                    Pais = new Pais()
+                                    {
+                                        Id = (int)dr["PaisId"],
+                                        Nombre = dr["PaisNombre"].ToString()
+                                    },
+                                    Descripcion = dr["Descripcion"].ToString(),
+                                    Imagen = dr["Imagen"].ToString()
+                                });
                             }
                             else
                             {
-                                while (dr.Read())
+                                retorno.Add(new Serie()
                                 {
-                                    retorno.Add(new Serie()
+                                    CodISAN = dr["CodISAN"].ToString(),
+                                    Titulo = dr["Titulo"].ToString(),
+                                    FechaEstreno = dr["FechaEstreno"].ToString(),
+                                    Director = rPersona.FindById((int)dr["DirectorId"]),
+                                    Genero = new Genero()
                                     {
-                                        CodISAN = dr["CodISAN"].ToString(),
-                                        Titulo = dr["Titulo"].ToString(),
-                                        FechaEstreno = dr["FechaEstreno"].ToString(),
-                                        Director = rPersona.FindById(dr["Director"]),
-                                        Genero = rGenero.FindById(dr["Genero"]),
-                                        Pais = rPais.FindById(dr["PaisId"]),
-                                        Descripcion = dr["Descripcion"].ToString(),
-                                        Imagen = dr["Imagen"].ToString(),
-                                        Elenco = elenco
-                                    });
-                                }
+                                        Nombre = dr["Genero"].ToString(),
+                                        Descripcion = dr["DescGenero"].ToString()
+                                    },
+                                    Pais = new Pais()
+                                    {
+                                        Id = (int)dr["PaisId"],
+                                        Nombre = dr["PaisNombre"].ToString()
+                                    },
+                                    Descripcion = dr["Descripcion"].ToString(),
+                                    Imagen = dr["Imagen"].ToString()
+                                });
                             }
                         }
                     }
@@ -265,7 +284,12 @@ namespace Repositorio
         {
             SqlConnection cn = UtilidadesBD.CrearConexion();
             //Preparar el comando
-            SqlCommand cmd = new SqlCommand("SELECT * FROM Material WHERE CodISAN=@id; SELECT * FROM Elenco Where CodISAN=@id", cn);
+            SqlCommand cmd = new SqlCommand(@"SELECT m.*, g.Descripcion as GDesc, c.Name as PaisNom, p.Nombre as DirNombre, 
+                                                    p.Apellido as DirApellido, p.PaisId as DirPais
+                                            From Countries c, Material m, Genero g, Persona p
+                                            Where m.PaisId = c.Id and m.DirectorId = p.Id and g.Nombre = m.Genero
+                                                and m.CodIsan = @id
+                                            ; SELECT * FROM Elenco Where CodISAN=@id", cn);
             cmd.Parameters.Add(new SqlParameter("@id", id));
 
             //El comando está completo, ejecutarlo
@@ -287,9 +311,10 @@ namespace Repositorio
                                     CodISAN = dr["CodISAN"].ToString(),
                                     Titulo = dr["Titulo"].ToString(),
                                     FechaEstreno = dr["FechaEstreno"].ToString(),
-                                    Director = rPersona.FindById(dr["Director"]),
-                                    Genero = rGenero.FindById(dr["Genero"]),
-                                    Pais = rPais.FindById(dr["PaisId"]),
+                                    Director = new Persona() { Id = (int)dr["DirectorId"], Nombre = dr["DirNombre"].ToString(),
+                                        Apellido = dr["DirApellido"].ToString(), PaisNacimiento = new Pais() { Id = (int)dr["DirPais"] } },
+                                    Genero = new Genero() { Nombre = dr["Genero"].ToString(), Descripcion = dr["GDesc"].ToString() },
+                                    Pais = new Pais() { Id = (int)dr["PaisId"], Nombre = dr["PaisNom"].ToString() },
                                     Descripcion = dr["Descripcion"].ToString(),
                                     Imagen = dr["Imagen"].ToString()
                                 };
@@ -301,9 +326,11 @@ namespace Repositorio
                                     CodISAN = dr["CodISAN"].ToString(),
                                     Titulo = dr["Titulo"].ToString(),
                                     FechaEstreno = dr["FechaEstreno"].ToString(),
-                                    Director = rPersona.FindById(dr["Director"]),
-                                    Genero = rGenero.FindById(dr["Genero"]),
-                                    Pais = rPais.FindById(dr["PaisId"]),
+                                    Director = new Persona() { Id = (int)dr["DirectorId"], Nombre = dr["DirNombre"].ToString(),
+                                        Apellido = dr["DirApellido"].ToString(), PaisNacimiento = new Pais() { Id = (int)dr["DirPais"] }
+                                    },
+                                    Genero = new Genero() { Nombre = dr["Genero"].ToString(), Descripcion = dr["GDesc"].ToString() },
+                                    Pais = new Pais() { Id = (int)dr["PaisId"], Nombre = dr["PaisNom"].ToString() },
                                     Descripcion = dr["Descripcion"].ToString(),
                                     Imagen = dr["Imagen"].ToString()
                                 };

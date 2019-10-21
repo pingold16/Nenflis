@@ -11,6 +11,8 @@ namespace ServicioWCF.DTO
     public class DTOTemporada
     {
         [DataMember]
+        public string CodISAN { get; set; }
+        [DataMember]
         public string Titulo { get; set; }
         [DataMember]
         public int NroTemporada { get; set; }

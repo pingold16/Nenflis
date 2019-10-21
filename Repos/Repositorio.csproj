@@ -47,6 +47,7 @@
     <Compile Include="RepositorioMaterial.cs" />
     <Compile Include="RepositorioPais.cs" />
     <Compile Include="RepositorioPersona.cs" />
+    <Compile Include="RepositorioTemporada.cs" />
     <Compile Include="RepositorioUser.cs" />
     <Compile Include="UtilidadesBD.cs" />
   </ItemGroup>
